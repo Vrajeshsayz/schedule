@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Revision Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f0f; --surface:#1a1a1a; --surface2:#222;
+  --border:#2e2e2e; --border2:#3a3a3a;
+  --text:#f0ede8; --muted:#888; --subtle:#555;
+  --accent:#e8604c; --radius:6px;
+}
+body.light {
+  --bg:#f5f3ef; --surface:#ffffff; --surface2:#f0ede8;
+  --border:#e0ddd8; --border2:#ccc9c4;
+  --text:#1a1a18; --muted:#777; --subtle:#aaa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;transition:background 0.2s,color 0.2s;}
+
+/* ── Header ── */
+header{border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:100;gap:10px;}
+header h1{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.03em;white-space:nowrap;}
+.header-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.header-saved{font-size:11px;color:var(--subtle);font-family:'DM Mono',monospace;}
+.nav-tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:calc(var(--radius) + 2px);padding:3px;}
+.nav-tab{padding:5px 12px;border-radius:var(--radius);font-size:12px;font-family:'DM Mono',monospace;cursor:pointer;border:none;background:none;color:var(--muted);transition:all 0.12s;}
+.nav-tab:hover{color:var(--text);}
+.nav-tab.active{background:var(--surface2);color:var(--text);}
+
+/* ── Buttons ── */
+.btn{padding:6px 12px;border-radius:var(--radius);font-size:12px;font-family:'DM Mono',monospace;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--muted);transition:all 0.15s;white-space:nowrap;}
+.btn:hover{background:var(--surface2);color:var(--text);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{opacity:0.85;}
+.btn.danger{background:transparent;color:#e84c4c;border-color:#e84c4c44;}
+.btn.danger:hover{background:#2a1414;}
+body.light .btn.danger:hover{background:#fde8e8;}
+.btn.warning{background:transparent;color:#c4a84c;border-color:#c4a84c44;}
+.btn.warning:hover{background:#241f10;}
+body.light .btn.warning:hover{background:#fdf5dc;}
+
+/* ── Layout ── */
+.layout{display:flex;height:calc(100vh - 49px);}
+.sidebar{width:185px;border-right:1px solid var(--border);padding:12px 0;flex-shrink:0;overflow-y:auto;transition:transform 0.25s;}
+.main{flex:1;overflow-y:auto;padding:20px 22px;}
+
+/* ── Mobile sidebar ── */
+.sidebar-toggle{display:none;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);cursor:pointer;padding:5px 9px;font-size:16px;}
+@media(max-width:680px){
+  .layout{height:calc(100vh - 49px);position:relative;}
+  .sidebar{position:absolute;left:0;top:0;bottom:0;z-index:50;background:var(--bg);transform:translateX(-100%);width:220px;}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:49;}
+  .sidebar-overlay.show{display:block;}
+  .main{padding:14px 14px;}
+  .sidebar-toggle{display:flex;align-items:center;}
+  header h1{font-size:12px;}
+  .header-saved{display:none;}
+  .nav-tab{padding:5px 9px;font-size:11px;}
+}
+@media(max-width:400px){
+  .nav-tab{padding:4px 7px;font-size:10px;}
+}
+
+.sidebar-section{padding:0 11px;margin-bottom:16px;}
+.sidebar-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--subtle);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px;}
+.day-btn{display:block;width:100%;text-align:left;padding:7px 9px;border-radius:var(--radius);border:none;background:none;color:var(--muted);cursor:pointer;font-family:'Sora',sans-serif;font-size:12.5px;transition:all 0.12s;margin-bottom:1px;}
+.day-btn:hover{background:var(--surface);color:var(--text);}
+.day-btn.active{background:var(--surface2);color:var(--text);font-weight:500;}
+.day-btn .day-sub{font-size:10px;color:var(--subtle);display:block;margin-top:1px;font-family:'DM Mono',monospace;}
+.day-btn.active .day-sub{color:var(--muted);}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:var(--muted);}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* ── Views ── */
+.view{display:none;}
+.view.active{display:block;}
+.page-title{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;margin-bottom:20px;}
+.content-wrap{max-width:580px;}
+
+/* ── Schedule ── */
+.day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+.day-title{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;}
+.day-note-display{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;margin-bottom:14px;line-height:1.6;cursor:pointer;transition:border-color 0.15s;}
+.day-note-display:hover{border-color:var(--border2);}
+.day-note-display.empty{color:var(--subtle);font-style:italic;}
+.slots-list{display:flex;flex-direction:column;gap:3px;}
+.slot-row{display:grid;grid-template-columns:105px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:var(--radius);border:1px solid transparent;transition:border-color 0.12s;}
+.slot-row:hover{border-color:var(--border);}
+@media(max-width:500px){.slot-row{grid-template-columns:85px 1fr auto;gap:6px;padding:7px 8px;}}
+.slot-time{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--muted);white-space:nowrap;}
+.slot-block{display:flex;align-items:center;gap:7px;min-width:0;}
+.slot-badge{font-size:10px;font-family:'DM Mono',monospace;font-weight:500;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.slot-text{font-size:12.5px;color:var(--text);line-height:1.4;}
+.slot-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.12s;}
+.slot-row:hover .slot-actions{opacity:1;}
+@media(hover:none){.slot-actions{opacity:1;}}
+
+/* ── Icon buttons ── */
+.icon-btn{width:26px;height:26px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all 0.12s;flex-shrink:0;}
+.icon-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+.icon-btn.del:hover{background:#2a1414;color:#e84c4c;border-color:#e84c4c44;}
+body.light .icon-btn.del:hover{background:#fde8e8;}
+
+/* ── Inputs ── */
+input,select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Sora',sans-serif;font-size:13px;padding:8px 10px;outline:none;transition:border-color 0.15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface);}
+
+/* ── Modals ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;margin-bottom:16px;color:var(--text);}
+.form-row{margin-bottom:12px;}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:5px;display:block;}
+.form-row input,.form-row select,.form-row textarea{width:100%;}
+.form-row textarea{resize:vertical;min-height:54px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+
+/* ── Time pickers ── */
+.time-picker-row{display:flex;align-items:center;gap:6px;}
+.time-sep{font-family:'DM Mono',monospace;font-size:16px;color:var(--muted);}
+.scroll-picker{width:50px;height:120px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);scroll-snap-type:y mandatory;scrollbar-width:none;}
+.scroll-picker::-webkit-scrollbar{display:none;}
+.scroll-picker-item{height:40px;line-height:40px;text-align:center;font-family:'DM Mono',monospace;font-size:15px;color:var(--muted);cursor:pointer;scroll-snap-align:start;transition:color 0.1s,background 0.1s;user-select:none;}
+.scroll-picker-item.selected{color:var(--text);background:var(--surface2);}
+.scroll-picker::before,.scroll-picker::after{content:'';display:block;height:40px;}
+.ampm-toggle{display:flex;flex-direction:column;gap:4px;}
+.ampm-btn{padding:4px 9px;border-radius:4px;border:1px solid var(--border);background:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;transition:all 0.12s;}
+.ampm-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.ampm-btn:not(.active):hover{background:var(--surface2);color:var(--text);}
+
+/* ── Empty / drag ── */
+.empty-state{text-align:center;padding:48px 20px;color:var(--subtle);font-family:'DM Mono',monospace;font-size:12px;}
+.drag-over{border:1px dashed var(--accent)!important;background:rgba(232,96,76,0.06);}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:9px 14px;border-radius:var(--radius);font-size:12px;font-family:'DM Mono',monospace;opacity:0;transform:translateY(8px);transition:all 0.2s;z-index:999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ── Settings ── */
+.settings-section{margin-bottom:26px;}
+.settings-section-title{font-family:'DM Mono',monospace;font-size:10px;color:var(--subtle);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.settings-row{display:flex;align-items:flex-start;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:14px;}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-info{flex:1;}
+.settings-row-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.settings-row-desc{font-size:11.5px;color:var(--muted);line-height:1.5;}
+.settings-row-action{flex-shrink:0;}
+
+/* ── Tag manager ── */
+.tag-list{display:flex;flex-direction:column;gap:4px;margin-top:10px;}
+.tag-row{display:grid;grid-template-columns:1fr 52px 52px auto;gap:6px;align-items:center;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);}
+.tag-row-name{font-size:12.5px;color:var(--text);}
+.color-swatch{width:24px;height:24px;border-radius:4px;border:1px solid var(--border);cursor:pointer;display:inline-block;}
+.color-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
+.tag-add-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.tag-add-row input{flex:1;min-width:100px;}
+input[type=color]{width:40px;height:34px;padding:2px;cursor:pointer;border-radius:var(--radius);}
+
+/* ── Todo ── */
+.todo-add-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.todo-add-row input{flex:1;min-width:120px;}
+.todo-filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.todo-filter-btn{padding:4px 10px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all 0.12s;}
+.todo-filter-btn.active{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+.todo-list{display:flex;flex-direction:column;gap:3px;}
+.todo-item{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border-radius:var(--radius);border:1px solid transparent;transition:border-color 0.12s;}
+.todo-item:hover{border-color:var(--border);}
+@media(hover:none){.todo-actions{opacity:1!important;}}
+.todo-check{width:17px;height:17px;border-radius:3px;border:1px solid var(--border2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.12s;margin-top:2px;}
+.todo-check.checked{background:var(--accent);border-color:var(--accent);}
+.todo-check.checked::after{content:'✓';font-size:10px;color:#fff;}
+.todo-text-wrap{flex:1;min-width:0;}
+.todo-text{font-size:13px;color:var(--text);line-height:1.4;display:flex;align-items:center;flex-wrap:wrap;gap:5px;}
+.todo-tag-pill{font-size:10px;font-family:'DM Mono',monospace;padding:1px 6px;border-radius:3px;}
+.todo-meta{font-size:10.5px;color:var(--subtle);margin-top:2px;font-family:'DM Mono',monospace;}
+.todo-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.12s;flex-shrink:0;}
+.todo-item:hover .todo-actions{opacity:1;}
+.todo-empty{text-align:center;padding:28px 0;color:var(--subtle);font-family:'DM Mono',monospace;font-size:12px;}
+.todo-stats{display:flex;gap:16px;margin-bottom:12px;}
+.todo-stat{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);}
+.todo-stat span{color:var(--text);font-weight:500;}
+.todo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;}
+
+/* ── Default editor modal ── */
+.def-modal{width:640px;}
+.def-day-tabs{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:12px;}
+.def-day-tab{padding:5px 10px;border-radius:var(--radius);font-size:11px;font-family:'DM Mono',monospace;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all 0.12s;}
+.def-day-tab.active{background:var(--surface2);color:var(--text);border-color:var(--border2);}
+.def-slot-list{display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;margin-bottom:10px;}
+.def-slot-row{display:grid;grid-template-columns:100px 1fr 80px auto;gap:7px;align-items:center;padding:7px 9px;border-radius:var(--radius);border:1px solid var(--border);}
+@media(max-width:500px){.def-slot-row{grid-template-columns:80px 1fr auto;} .def-slot-badge{display:none;}}
+.def-slot-time{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--muted);}
+.def-slot-desc{font-size:12px;color:var(--text);}
+.def-slot-badge{font-size:10px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:3px;text-align:center;}
+.def-add-section{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
+.def-add-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;}
+.def-add-fields{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;}
+.def-add-fields select,.def-add-fields input{font-size:12px;padding:6px 9px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="sidebar-toggle" id="sb-toggle" onclick="toggleSidebar()">☰</button>
+    <h1>revision schedule</h1>
+  </div>
+  <div class="header-right">
+    <span class="header-saved" id="last-saved"></span>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchView('schedule',this)">schedule</button>
+      <button class="nav-tab" onclick="switchView('todo',this)">todo</button>
+      <button class="nav-tab" onclick="switchView('settings',this)">settings</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div id="sb-schedule">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Days</div>
+        <div id="day-nav"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Types</div>
+        <div id="legend"></div>
+      </div>
+    </div>
+    <div id="sb-todo" style="display:none">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Filter</div>
+        <div id="todo-sb-filters"></div>
+      </div>
+    </div>
+    <div id="sb-settings" style="display:none">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Settings</div>
+        <button class="day-btn active" id="stab-general" onclick="switchSettingsTab('general')">general</button>
+        <button class="day-btn" id="stab-tags" onclick="switchSettingsTab('tags')">manage tags</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- SCHEDULE -->
+    <div class="view active" id="view-schedule"></div>
+
+    <!-- TODO -->
+    <div class="view" id="view-todo">
+      <div class="content-wrap">
+        <div class="todo-header">
+          <div class="page-title" style="margin-bottom:0">todo list</div>
+          <button class="btn danger" onclick="clearDoneTodos()">clear done</button>
+        </div>
+        <div class="todo-stats" id="todo-stats"></div>
+        <div class="todo-add-row">
+          <input type="text" id="todo-input" placeholder="Add a task...">
+          <select id="todo-tag-sel" style="width:120px"></select>
+          <button class="btn primary" onclick="addTodo()">+ add</button>
+        </div>
+        <div class="todo-filters" id="todo-filters"></div>
+        <div class="todo-list" id="todo-list"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+
+      <!-- General sub-panel -->
+      <div class="content-wrap" id="spanel-general">
+        <div class="page-title">general</div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">appearance</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Theme</div>
+              <div class="settings-row-desc">Switch between dark and light mode.</div>
+            </div>
+            <div class="settings-row-action">
+              <button class="btn" id="theme-btn" onclick="toggleTheme()">☀ light mode</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">schedule defaults</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Go to default</div>
+              <div class="settings-row-desc">Reset the entire schedule back to the saved default. Overwrites current changes.</div>
+            </div>
+            <div class="settings-row-action">
+              <button class="btn warning" onclick="resetToDefault()">reset schedule</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Edit default</div>
+              <div class="settings-row-desc">Edit what the default schedule contains, day by day.</div>
+            </div>
+            <div class="settings-row-action">
+              <button class="btn" onclick="openDefModal()">edit default</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Save current as default</div>
+              <div class="settings-row-desc">Make your live schedule the new default so future resets restore to it.</div>
+            </div>
+            <div class="settings-row-action">
+              <button class="btn" onclick="saveAsDefault()">set as default</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">data</div>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <div class="settings-row-label">Clear all todos</div>
+              <div class="settings-row-desc">Permanently delete every item in the todo list.</div>
+            </div>
+            <div class="settings-row-action">
+              <button class="btn danger" onclick="clearAllTodos()">clear todos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manage tags sub-panel -->
+      <div class="content-wrap" id="spanel-tags" style="display:none">
+        <div class="page-title">manage tags</div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">slot types &amp; colours</div>
+          <div class="settings-row" style="flex-direction:column;align-items:stretch;gap:10px">
+            <div class="settings-row-desc">Edit colours for existing types or add your own. Changes apply immediately across the schedule and todo list.</div>
+            <div class="tag-list" id="tag-list"></div>
+            <div class="tag-add-row">
+              <input type="text" id="new-tag-name" placeholder="Type name e.g. biology" style="flex:2">
+              <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+                <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">text</span>
+                <input type="color" id="new-tag-color" value="#aabbcc">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+                <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">bg</span>
+                <input type="color" id="new-tag-bg" value="#1a2030">
+              </div>
+              <button class="btn primary" onclick="addTag()" style="align-self:flex-end">+ add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Slot modal -->
+<div class="modal-overlay" id="slot-modal">
+  <div class="modal">
+    <h3 id="modal-title">add slot</h3>
+    <div class="form-row">
+      <label class="form-label">Day</label>
+      <select id="f-day"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Start time</label>
+      <div class="time-picker-row">
+        <div class="scroll-picker" id="sp-sh"></div>
+        <span class="time-sep">:</span>
+        <div class="scroll-picker" id="sp-sm"></div>
+        <div class="ampm-toggle" id="sp-sa">
+          <button class="ampm-btn active" data-val="am">AM</button>
+          <button class="ampm-btn" data-val="pm">PM</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">End time</label>
+      <div class="time-picker-row">
+        <div class="scroll-picker" id="sp-eh"></div>
+        <span class="time-sep">:</span>
+        <div class="scroll-picker" id="sp-em"></div>
+        <div class="ampm-toggle" id="sp-ea">
+          <button class="ampm-btn active" data-val="am">AM</button>
+          <button class="ampm-btn" data-val="pm">PM</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Type</label>
+      <select id="f-type"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Description</label>
+      <textarea id="f-desc" placeholder="What you'll be studying..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">cancel</button>
+      <button class="btn danger" id="delete-btn" style="display:none" onclick="deleteSlot()">delete</button>
+      <button class="btn primary" onclick="saveSlot()">save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Default editor modal -->
+<div class="modal-overlay" id="def-modal">
+  <div class="modal def-modal">
+    <h3>edit default schedule</h3>
+    <div class="def-day-tabs" id="def-day-tabs"></div>
+    <div class="def-slot-list" id="def-slot-list"></div>
+    <div class="def-add-section">
+      <div class="def-add-label">add slot to default</div>
+      <div class="def-add-fields">
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px">START</div>
+          <div class="time-picker-row">
+            <div class="scroll-picker" id="dsp-sh"></div>
+            <span class="time-sep">:</span>
+            <div class="scroll-picker" id="dsp-sm"></div>
+            <div class="ampm-toggle" id="dsp-sa">
+              <button class="ampm-btn active" data-val="am">AM</button>
+              <button class="ampm-btn" data-val="pm">PM</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px">END</div>
+          <div class="time-picker-row">
+            <div class="scroll-picker" id="dsp-eh"></div>
+            <span class="time-sep">:</span>
+            <div class="scroll-picker" id="dsp-em"></div>
+            <div class="ampm-toggle" id="dsp-ea">
+              <button class="ampm-btn active" data-val="am">AM</button>
+              <button class="ampm-btn" data-val="pm">PM</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">TYPE</div>
+          <select id="def-type" style="width:130px;font-size:12px;padding:6px 8px;"></select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px">
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">DESCRIPTION</div>
+          <input type="text" id="def-desc" placeholder="Description" style="font-size:12px;padding:6px 9px;">
+        </div>
+      </div>
+      <button class="btn primary" onclick="addDefaultSlot()" style="margin-top:10px">+ add slot</button>
+    </div>
+    <div class="modal-actions" style="margin-top:10px">
+      <button class="btn" onclick="closeDefModal()">close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Todo edit modal -->
+<div class="modal-overlay" id="todo-edit-modal">
+  <div class="modal">
+    <h3>edit task</h3>
+    <div class="form-row">
+      <label class="form-label">Task</label>
+      <input type="text" id="todo-edit-text" style="width:100%">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Tag</label>
+      <select id="todo-edit-tag" style="width:100%"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTodoEdit()">cancel</button>
+      <button class="btn primary" onclick="saveTodoEdit()">save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag edit modal -->
+<div class="modal-overlay" id="tag-edit-modal">
+  <div class="modal" style="width:320px">
+    <h3>edit type</h3>
+    <div class="form-row">
+      <label class="form-label">Name</label>
+      <input type="text" id="te-name" style="width:100%">
+    </div>
+    <div class="form-row" style="display:flex;gap:12px">
+      <div style="flex:1">
+        <label class="form-label">Text colour</label>
+        <input type="color" id="te-color" style="width:100%;height:38px">
+      </div>
+      <div style="flex:1">
+        <label class="form-label">Background</label>
+        <input type="color" id="te-bg" style="width:100%;height:38px">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTagEdit()">cancel</button>
+      <button class="btn primary" onclick="saveTagEdit()">save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const DAYS=[
+  {id:'mon',label:'Monday',   sub:'Chem tuition 6–7:30pm'},
+  {id:'tue',label:'Tuesday',  sub:'No tuition'},
+  {id:'wed',label:'Wednesday',sub:'Physics tuition 7:30–9am'},
+  {id:'thu',label:'Thursday', sub:'Physics tuition 6–7:30pm'},
+  {id:'fri',label:'Friday',   sub:'Chem tuition 7:30–9am'},
+  {id:'sat',label:'Saturday', sub:'Physics tuition 4:30–6pm'},
+  {id:'sun',label:'Sunday',   sub:'Chem tuition 9–10:30am'},
+];
+
+const BUILTIN_TYPES={
+  'math':        {label:'Maths',          color:'#e8604c',bg:'#2a1a18',builtin:true},
+  'chem':        {label:'Chemistry',      color:'#e88c4c',bg:'#2a1f14',builtin:true},
+  'phys':        {label:'Physics',        color:'#4c8ee8',bg:'#141e2a',builtin:true},
+  'german':      {label:'German',         color:'#6ac47a',bg:'#16231a',builtin:true},
+  'tuition-chem':{label:'Chem tuition',   color:'#e85e8a',bg:'#2a1420',builtin:true},
+  'tuition-phys':{label:'Physics tuition',color:'#a06ae8',bg:'#1e1428',builtin:true},
+  'school':      {label:'School',         color:'#888',   bg:'#1e1e1e',builtin:true},
+  'rest':        {label:'Rest / break',   color:'#555',   bg:'#181818',builtin:true},
+  'review':      {label:'Weekly review',  color:'#c4a84c',bg:'#241f10',builtin:true},
+  'free':        {label:'Free time',      color:'#444',   bg:'#161616',builtin:true},
+};
+
+const INITIAL_SCHEDULE={
+  mon:{note:"Tuition is chem tonight so all self-study evening time goes to Maths. After tuition, spend 1 hr consolidating what was covered.",slots:[{id:'s1',time:'4:30am–6am',type:'math',desc:'FP2 / FP3 problem sets (hardest topics first)'},{id:'s2',time:'6am–6:30am',type:'german',desc:'30 min — grammar focus'},{id:'s3',time:'6:30am–7am',type:'rest',desc:'Get ready for school'},{id:'s4',time:'7am–4pm',type:'school',desc:'School'},{id:'s5',time:'4pm–6pm',type:'math',desc:'FP3 deep dive / past paper questions'},{id:'s6',time:'6pm–7:30pm',type:'tuition-chem',desc:'Chemistry tuition'},{id:'s7',time:'7:30pm–8:30pm',type:'chem',desc:'Review tuition notes + mark scheme practice'},{id:'s8',time:'8:30pm–10pm',type:'free',desc:'Wind down / rest'}]},
+  tue:{note:"No tuition today — full evening available. M3 gets priority in the first block when your brain is freshest post-school.",slots:[{id:'s1',time:'4:30am–6am',type:'chem',desc:'Organic mechanisms / Paper 1 focus'},{id:'s2',time:'6am–6:30am',type:'german',desc:'30 min — vocab + 10 new words'},{id:'s3',time:'6:30am–7am',type:'rest',desc:'Get ready for school'},{id:'s4',time:'7am–4pm',type:'school',desc:'School'},{id:'s5',time:'4pm–4:30pm',type:'rest',desc:'Decompress / snack'},{id:'s6',time:'4:30pm–6:30pm',type:'math',desc:'M3 mechanics (Tue is M3 day)'},{id:'s7',time:'6:30pm–8pm',type:'phys',desc:'Physics — topic review / weak areas'},{id:'s8',time:'8pm–10pm',type:'free',desc:'Wind down / rest'}]},
+  wed:{note:"Tuition runs 7:30–9am so German shifts to after school. The 4:30–7am window is protected for Maths.",slots:[{id:'s1',time:'4:30am–7am',type:'math',desc:'FP2 deep dive (2.5 hrs before tuition)'},{id:'s2',time:'7am–7:30am',type:'rest',desc:'Get ready / travel'},{id:'s3',time:'7:30am–9am',type:'tuition-phys',desc:'Physics tuition (before school)'},{id:'s4',time:'9am–4pm',type:'school',desc:'School'},{id:'s5',time:'4pm–4:30pm',type:'rest',desc:'Decompress'},{id:'s6',time:'4:30pm–5pm',type:'german',desc:'30 min — tuition moved it out of morning'},{id:'s7',time:'5pm–7pm',type:'chem',desc:'Paper 2 / 3 focus + past questions'},{id:'s8',time:'7pm–8:30pm',type:'phys',desc:'Review tuition notes from this morning'},{id:'s9',time:'8:30pm–10pm',type:'free',desc:'Wind down / rest'}]},
+  thu:{note:"Physics tuition at 6pm means evening self-study goes to Maths (4–6pm). Consolidation hour after tuition.",slots:[{id:'s1',time:'4:30am–6am',type:'chem',desc:'Paper 3 / physical chemistry (equilibria, thermodynamics)'},{id:'s2',time:'6am–6:30am',type:'german',desc:'30 min — sentence structure + word order'},{id:'s3',time:'6:30am–7am',type:'rest',desc:'Get ready'},{id:'s4',time:'7am–4pm',type:'school',desc:'School'},{id:'s5',time:'4pm–6pm',type:'math',desc:'FP3 / FP2 past paper under timed conditions'},{id:'s6',time:'6pm–7:30pm',type:'tuition-phys',desc:'Physics tuition'},{id:'s7',time:'7:30pm–8:30pm',type:'phys',desc:'Consolidate tuition notes immediately after'},{id:'s8',time:'8:30pm–10pm',type:'free',desc:'Wind down / rest'}]},
+  fri:{note:"Chem tuition 7:30–9am. German shifts to after school. Friday evening is partly a planning session.",slots:[{id:'s1',time:'4:30am–7am',type:'math',desc:'Mixed past paper questions across FP2, FP3, M3'},{id:'s2',time:'7am–7:30am',type:'rest',desc:'Get ready / travel'},{id:'s3',time:'7:30am–9am',type:'tuition-chem',desc:'Chemistry tuition (before school)'},{id:'s4',time:'9am–4pm',type:'school',desc:'School'},{id:'s5',time:'4pm–4:30pm',type:'rest',desc:'Decompress'},{id:'s6',time:'4:30pm–5pm',type:'german',desc:'30 min — Perfekt / past tense'},{id:'s7',time:'5pm–6:30pm',type:'chem',desc:'Review tuition + mark scheme work'},{id:'s8',time:'6:30pm–8pm',type:'review',desc:'Weekly review — log weak topics, plan the weekend'},{id:'s9',time:'8pm–10pm',type:'free',desc:'Wind down / rest'}]},
+  sat:{note:"Saturday is your heaviest self-study day. Physics tuition at 4:30pm caps the day.",slots:[{id:'s1',time:'4:30am–7am',type:'math',desc:'Full timed past paper (FP2 or FP3)'},{id:'s2',time:'7am–8am',type:'german',desc:'1 hr — grammar + listening / Nicos Weg'},{id:'s3',time:'8am–9am',type:'rest',desc:'Breakfast + rest'},{id:'s4',time:'9am–12pm',type:'chem',desc:'Full timed past paper + mark scheme review'},{id:'s5',time:'12pm–1pm',type:'rest',desc:'Lunch'},{id:'s6',time:'1pm–4pm',type:'math',desc:'M3 full paper or weak topic blitz'},{id:'s7',time:'4pm–4:30pm',type:'rest',desc:'Break before tuition'},{id:'s8',time:'4:30pm–6pm',type:'tuition-phys',desc:'Physics tuition'},{id:'s9',time:'6pm–10pm',type:'free',desc:'Free time / rest / social'}]},
+  sun:{note:"Sunday tuition (chem) 9–10:30am. Morning is split. The 2–4pm planning block is non-negotiable.",slots:[{id:'s1',time:'6am–8am',type:'math',desc:"FP2 or FP3 weak topic (from this week's papers)"},{id:'s2',time:'8am–9am',type:'german',desc:'1 hr — vocab review + reading an A2 text'},{id:'s3',time:'9am–10:30am',type:'tuition-chem',desc:'Chemistry tuition'},{id:'s4',time:'10:30am–11am',type:'chem',desc:'Immediate tuition notes review (20 min max)'},{id:'s5',time:'11am–12pm',type:'rest',desc:'Rest / lunch'},{id:'s6',time:'12pm–2pm',type:'phys',desc:'Past paper or topic review'},{id:'s7',time:'2pm–4pm',type:'review',desc:'All subjects — weak topic log, plan full next week'},{id:'s8',time:'4pm–10pm',type:'free',desc:'Free time / rest'}]},
+};
+
+let scheduleData={}, defaultData={}, customTypes={}, todos=[], currentDay='mon', currentView='schedule';
+let editingSlot=null, defDay='mon', todoFilter='all', editingTodoId=null, editingTagId=null;
+let lightMode=false;
+
+/* ═══════════════════════════════════════════
+   PERSIST
+═══════════════════════════════════════════ */
+function load(){
+  try{scheduleData=JSON.parse(localStorage.getItem('rs-sched')||'null')||JSON.parse(JSON.stringify(INITIAL_SCHEDULE));}catch(e){scheduleData=JSON.parse(JSON.stringify(INITIAL_SCHEDULE));}
+  try{defaultData=JSON.parse(localStorage.getItem('rs-default')||'null')||JSON.parse(JSON.stringify(INITIAL_SCHEDULE));}catch(e){defaultData=JSON.parse(JSON.stringify(INITIAL_SCHEDULE));}
+  try{customTypes=JSON.parse(localStorage.getItem('rs-types')||'{}');}catch(e){customTypes={};}
+  try{todos=JSON.parse(localStorage.getItem('rs-todos')||'[]');}catch(e){todos=[];}
+  lightMode=localStorage.getItem('rs-light')==='1';
+  if(lightMode)applyTheme();
+  const ts=localStorage.getItem('rs-ts');
+  if(ts)document.getElementById('last-saved').textContent='saved '+ts;
+}
+function save(){
+  localStorage.setItem('rs-sched',JSON.stringify(scheduleData));
+  localStorage.setItem('rs-default',JSON.stringify(defaultData));
+  localStorage.setItem('rs-types',JSON.stringify(customTypes));
+  localStorage.setItem('rs-todos',JSON.stringify(todos));
+  localStorage.setItem('rs-light',lightMode?'1':'0');
+  const ts=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  localStorage.setItem('rs-ts',ts);
+  document.getElementById('last-saved').textContent='saved '+ts;
+}
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
+function genId(){return 'x'+Date.now()+Math.random().toString(36).slice(2,5);}
+
+/* all types merged */
+function allTypes(){return {...BUILTIN_TYPES,...customTypes};}
+
+/* ═══════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════ */
+function applyTheme(){
+  document.body.classList.toggle('light',lightMode);
+  document.getElementById('theme-btn').textContent=lightMode?'☽ dark mode':'☀ light mode';
+}
+function toggleTheme(){lightMode=!lightMode;applyTheme();save();}
+
+/* ═══════════════════════════════════════════
+   VIEWS / SIDEBAR
+═══════════════════════════════════════════ */
+function switchView(v,btn){
+  currentView=v;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('sb-schedule').style.display=v==='schedule'?'':'none';
+  document.getElementById('sb-todo').style.display=v==='todo'?'':'none';
+  document.getElementById('sb-settings').style.display=v==='settings'?'':'none';
+  closeSidebar();
+  if(v==='todo'){renderTodoSb();renderTodo();}
+  else if(v==='schedule'){buildNav();renderDay();}
+  else if(v==='settings'){renderTagList();switchSettingsTab('general');}
+}
+function switchSettingsTab(tab){
+  document.getElementById('spanel-general').style.display=tab==='general'?'':'none';
+  document.getElementById('spanel-tags').style.display=tab==='tags'?'':'none';
+  document.getElementById('stab-general').classList.toggle('active',tab==='general');
+  document.getElementById('stab-tags').classList.toggle('active',tab==='tags');
+  if(tab==='tags')renderTagList();
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════
+   SCHEDULE
+═══════════════════════════════════════════ */
+function buildNav(){
+  const nav=document.getElementById('day-nav');nav.innerHTML='';
+  DAYS.forEach(d=>{
+    const b=document.createElement('button');
+    b.className='day-btn'+(d.id===currentDay?' active':'');
+    b.innerHTML=d.label+'<span class="day-sub">'+d.sub+'</span>';
+    b.onclick=()=>{currentDay=d.id;buildNav();renderDay();closeSidebar();};
+    nav.appendChild(b);
+  });
+}
+function buildLegend(){
+  const t=allTypes();
+  document.getElementById('legend').innerHTML=Object.entries(t).map(([,v])=>`<div class="legend-item"><div class="legend-dot" style="background:${v.color}"></div>${v.label}</div>`).join('');
+}
+function renderDay(){
+  const d=scheduleData[currentDay],info=DAYS.find(x=>x.id===currentDay);
+  const main=document.getElementById('view-schedule');
+  const types=allTypes();
+  let h='';
+  if(!d.slots||!d.slots.length)h='<div class="empty-state">no slots yet — tap + add slot</div>';
+  else d.slots.forEach((s,i)=>{
+    const t=types[s.type]||types['free'];
+    h+=`<div class="slot-row" draggable="true" ondragstart="drgStart(event,${i})" ondragover="drgOver(event)" ondrop="drgDrop(event,${i})" ondragleave="drgLeave(event)">
+      <div class="slot-time">${s.time}</div>
+      <div class="slot-block"><span class="slot-badge" style="background:${t.bg};color:${t.color}">${t.label}</span><span class="slot-text">${s.desc}</span></div>
+      <div class="slot-actions">
+        <button class="icon-btn" onclick="openEditSlot(${i})">✎</button>
+        <button class="icon-btn del" onclick="event.stopPropagation();delSlot(${i})">✕</button>
+      </div>
+    </div>`;
+  });
+  const dayIndex=DAYS.findIndex(x=>x.id===currentDay);
+  const quote=getDayQuote(dayIndex);
+  const noteHtml=quote
+    ?`<span style="font-style:italic">"${quote.q}"</span> <span style="color:var(--subtle);font-size:11px">— ${quote.a}</span>`
+    :`<span style="color:var(--subtle);font-style:italic">loading today's motivation...</span>`;
+  main.innerHTML=`<div class="day-header"><div class="day-title">${info.label}</div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn" onclick="refreshQuotes()">↻ quote</button><button class="btn primary" onclick="openAddSlot()">+ add slot</button></div></div>
+  <div class="day-note-display">${noteHtml}</div>
+  <div class="slots-list">${h}</div>`;
+}
+let dragIdx=null;
+function drgStart(e,i){dragIdx=i;e.dataTransfer.effectAllowed='move';}
+function drgOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function drgLeave(e){e.currentTarget.classList.remove('drag-over');}
+function drgDrop(e,ti){e.currentTarget.classList.remove('drag-over');if(dragIdx===null||dragIdx===ti)return;const s=scheduleData[currentDay].slots,m=s.splice(dragIdx,1)[0];s.splice(ti,0,m);dragIdx=null;save();renderDay();}
+
+/* ═══════════════════════════════════════════
+   TIME PICKERS
+═══════════════════════════════════════════ */
+const HOURS=['12','1','2','3','4','5','6','7','8','9','10','11'];
+const MINS=['00','05','10','15','20','25','30','35','40','45','50','55'];
+function buildPicker(id,items,sel){
+  const el=document.getElementById(id);el.innerHTML='';
+  items.forEach((v,i)=>{
+    const d=document.createElement('div');
+    d.className='scroll-picker-item'+(v===sel?' selected':'');
+    d.textContent=v;
+    d.onclick=()=>{el.querySelectorAll('.scroll-picker-item').forEach(x=>x.classList.remove('selected'));d.classList.add('selected');el.scrollTo({top:i*40,behavior:'smooth'});};
+    el.appendChild(d);
+  });
+  const idx=items.indexOf(sel);
+  if(idx>=0)setTimeout(()=>el.scrollTop=idx*40,0);
+}
+function setAmpm(gid,val){document.querySelectorAll('#'+gid+' .ampm-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));}
+function getAmpm(gid){const a=document.querySelector('#'+gid+' .ampm-btn.active');return a?a.dataset.val:'am';}
+function getPV(id){const s=document.querySelector('#'+id+' .scroll-picker-item.selected');return s?s.textContent:null;}
+function setupAmpm(gid){document.querySelectorAll('#'+gid+' .ampm-btn').forEach(b=>{b.onclick=()=>{document.querySelectorAll('#'+gid+' .ampm-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');};});}
+function parseTC(str){
+  const def={sh:'4',sm:'00',sa:'am',eh:'6',em:'00',ea:'am'};
+  if(!str)return def;const parts=str.split('–');if(parts.length<2)return def;
+  function p(s){
+    s=s.trim();let ap='am';
+    if(/pm$/i.test(s)){ap='pm';s=s.replace(/pm$/i,'');}else if(/am$/i.test(s)){s=s.replace(/am$/i,'');}
+    const[h,m]=s.split(':');const hN=parseInt(h)||12;const mS=m?m.padStart(2,'0').slice(0,2):'00';
+    const mSnap=MINS.reduce((a,b)=>Math.abs(parseInt(b)-parseInt(mS))<Math.abs(parseInt(a)-parseInt(mS))?b:a);
+    return{h:String(hN===0?12:hN),m:mSnap,ap};
+  }
+  const s=p(parts[0]),e=p(parts[1]);return{sh:s.h,sm:s.m,sa:s.ap,eh:e.h,em:e.m,ea:e.ap};
+}
+function initPickers(c,pref='sp-'){
+  buildPicker(pref+'sh',HOURS,c.sh);buildPicker(pref+'sm',MINS,c.sm);
+  buildPicker(pref+'eh',HOURS,c.eh);buildPicker(pref+'em',MINS,c.em);
+  setAmpm(pref+'sa',c.sa);setAmpm(pref+'ea',c.ea);
+  setupAmpm(pref+'sa');setupAmpm(pref+'ea');
+}
+function buildTimeFrom(pref='sp-'){
+  const sh=getPV(pref+'sh')||'4',sm=getPV(pref+'sm')||'00',sa=getAmpm(pref+'sa');
+  const eh=getPV(pref+'eh')||'6',em=getPV(pref+'em')||'00',ea=getAmpm(pref+'ea');
+  return(sm==='00'?sh:sh+':'+sm)+sa+'–'+(em==='00'?eh:eh+':'+em)+ea;
+}
+function t2m(str){
+  const s=str.split('–')[0].trim();let ap='am',t=s;
+  if(/pm$/i.test(t)){ap='pm';t=t.replace(/pm$/i,'');}else if(/am$/i.test(t)){t=t.replace(/am$/i,'');}
+  const[h,m]=t.split(':');let hh=parseInt(h)||0;const mm=parseInt(m)||0;
+  if(ap==='pm'&&hh!==12)hh+=12;if(ap==='am'&&hh===12)hh=0;return hh*60+mm;
+}
+
+/* ═══════════════════════════════════════════
+   SLOT TYPE SELECT
+═══════════════════════════════════════════ */
+function populateTypeSelect(selId,current){
+  const el=document.getElementById(selId);el.innerHTML='';
+  Object.entries(allTypes()).forEach(([k,v])=>{
+    el.innerHTML+=`<option value="${k}"${k===current?' selected':''}>${v.label}</option>`;
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SLOT MODAL
+═══════════════════════════════════════════ */
+function buildDaySel(sel){const el=document.getElementById('f-day');el.innerHTML='';DAYS.forEach(d=>el.innerHTML+=`<option value="${d.id}"${d.id===sel?' selected':''}>${d.label}</option>`);}
+function openAddSlot(){
+  editingSlot=null;
+  document.getElementById('modal-title').textContent='add slot';
+  document.getElementById('delete-btn').style.display='none';
+  buildDaySel(currentDay);
+  initPickers({sh:'4',sm:'30',sa:'am',eh:'6',em:'00',ea:'am'},'sp-');
+  populateTypeSelect('f-type','math');
+  document.getElementById('f-desc').value='';
+  document.getElementById('slot-modal').classList.add('open');
+}
+function openEditSlot(i){
+  editingSlot=i;const slot=scheduleData[currentDay].slots[i];
+  document.getElementById('modal-title').textContent='edit slot';
+  document.getElementById('delete-btn').style.display='inline-flex';
+  buildDaySel(currentDay);
+  initPickers(parseTC(slot.time),'sp-');
+  populateTypeSelect('f-type',slot.type);
+  document.getElementById('f-desc').value=slot.desc;
+  document.getElementById('slot-modal').classList.add('open');
+}
+function saveSlot(){
+  const day=document.getElementById('f-day').value;
+  const time=buildTimeFrom('sp-');
+  const type=document.getElementById('f-type').value;
+  const desc=document.getElementById('f-desc').value.trim();
+  if(!desc){toast('add a description');return;}
+  const ns={id:genId(),time,type,desc};
+  if(editingSlot!==null){
+    if(day!==currentDay){scheduleData[currentDay].slots.splice(editingSlot,1);if(!scheduleData[day].slots)scheduleData[day].slots=[];scheduleData[day].slots.push(ns);}
+    else{scheduleData[currentDay].slots[editingSlot]={...scheduleData[currentDay].slots[editingSlot],time,type,desc};}
+  }else{
+    if(!scheduleData[day].slots)scheduleData[day].slots=[];scheduleData[day].slots.push(ns);
+    if(day!==currentDay){currentDay=day;buildNav();}
+  }
+  scheduleData[day].slots.sort((a,b)=>t2m(a.time)-t2m(b.time));
+  save();closeModal();renderDay();
+}
+function delSlot(i){scheduleData[currentDay].slots.splice(i,1);save();renderDay();toast('slot deleted');}
+function deleteSlot(){if(editingSlot!==null){scheduleData[currentDay].slots.splice(editingSlot,1);save();closeModal();renderDay();}}
+function closeModal(){document.getElementById('slot-modal').classList.remove('open');editingSlot=null;}
+
+/* ═══════════════════════════════════════════
+   SETTINGS — DEFAULTS
+═══════════════════════════════════════════ */
+function resetToDefault(){if(!confirm('Reset to default? Current changes will be lost.'))return;scheduleData=JSON.parse(JSON.stringify(defaultData));save();renderDay();toast('schedule reset');}
+function saveAsDefault(){defaultData=JSON.parse(JSON.stringify(scheduleData));save();toast('saved as default');}
+
+function openDefModal(){
+  defDay='mon';
+  populateTypeSelect('def-type','math');
+  initPickers({sh:'4',sm:'30',sa:'am',eh:'6',em:'00',ea:'am'},'dsp-');
+  renderDefTabs();renderDefSlots();
+  document.getElementById('def-modal').classList.add('open');
+}
+function closeDefModal(){document.getElementById('def-modal').classList.remove('open');}
+function renderDefTabs(){
+  document.getElementById('def-day-tabs').innerHTML=DAYS.map(d=>`<button class="def-day-tab${d.id===defDay?' active':''}" onclick="switchDefDay('${d.id}')">${d.label}</button>`).join('');
+}
+function switchDefDay(id){
+  defDay=id;renderDefTabs();renderDefSlots();
+  populateTypeSelect('def-type','math');
+  initPickers({sh:'4',sm:'30',sa:'am',eh:'6',em:'00',ea:'am'},'dsp-');
+}
+function renderDefSlots(){
+  const el=document.getElementById('def-slot-list');
+  const types=allTypes();
+  const slots=defaultData[defDay].slots||[];
+  if(!slots.length){el.innerHTML='<div style="padding:16px;text-align:center;color:var(--subtle);font-family:DM Mono,monospace;font-size:12px">no slots</div>';return;}
+  el.innerHTML=slots.map((s,i)=>{const t=types[s.type]||types['free'];return`<div class="def-slot-row"><div class="def-slot-time">${s.time}</div><div class="def-slot-desc">${s.desc}</div><span class="def-slot-badge" style="background:${t.bg};color:${t.color}">${t.label}</span><button class="icon-btn del" onclick="removeDefSlot(${i})">✕</button></div>`;}).join('');
+}
+function addDefaultSlot(){
+  const time=buildTimeFrom('dsp-');
+  const type=document.getElementById('def-type').value;
+  const desc=document.getElementById('def-desc').value.trim();
+  if(!desc){toast('add a description');return;}
+  if(!defaultData[defDay].slots)defaultData[defDay].slots=[];
+  defaultData[defDay].slots.push({id:genId(),time,type,desc});
+  defaultData[defDay].slots.sort((a,b)=>t2m(a.time)-t2m(b.time));
+  document.getElementById('def-desc').value='';
+  initPickers({sh:'4',sm:'30',sa:'am',eh:'6',em:'00',ea:'am'},'dsp-');
+  save();renderDefSlots();toast('added to default');
+}
+function removeDefSlot(i){defaultData[defDay].slots.splice(i,1);save();renderDefSlots();toast('removed');}
+
+/* ═══════════════════════════════════════════
+   TAG / TYPE MANAGER
+═══════════════════════════════════════════ */
+function renderTagList(){
+  const types=allTypes();
+  const el=document.getElementById('tag-list');
+  el.innerHTML=Object.entries(types).map(([k,v])=>`
+    <div class="tag-row">
+      <div class="tag-row-name">${v.label}${v.builtin?'':' <span style="font-size:10px;color:var(--subtle)">(custom)</span>'}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span class="color-label">text</span>
+        <div class="color-swatch" style="background:${v.color}" onclick="openTagEdit('${k}')"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        <span class="color-label">bg</span>
+        <div class="color-swatch" style="background:${v.bg}" onclick="openTagEdit('${k}')"></div>
+      </div>
+      <button class="icon-btn${v.builtin?'':' del'}" onclick="${v.builtin?'openTagEdit(\''+k+'\')':'removeTag(\''+k+'\')'}" title="${v.builtin?'edit':'delete'}">${v.builtin?'✎':'✕'}</button>
+    </div>`).join('');
+  buildLegend();
+}
+function addTag(){
+  const name=document.getElementById('new-tag-name').value.trim();
+  const color=document.getElementById('new-tag-color').value;
+  const bg=document.getElementById('new-tag-bg').value;
+  if(!name){toast('enter a tag name');return;}
+  const key='custom-'+name.toLowerCase().replace(/\s+/g,'-');
+  if(allTypes()[key]){toast('tag already exists');return;}
+  customTypes[key]={label:name,color,bg,builtin:false};
+  document.getElementById('new-tag-name').value='';
+  save();renderTagList();toast('tag added');
+}
+function removeTag(key){
+  if(!customTypes[key])return;
+  delete customTypes[key];save();renderTagList();toast('tag removed');
+}
+function openTagEdit(key){
+  editingTagId=key;
+  const t=allTypes()[key];
+  document.getElementById('te-name').value=t.label;
+  document.getElementById('te-color').value=t.color;
+  document.getElementById('te-bg').value=t.bg;
+  document.getElementById('tag-edit-modal').classList.add('open');
+}
+function saveTagEdit(){
+  const k=editingTagId;if(!k)return;
+  const types=allTypes();const t=types[k];
+  const name=document.getElementById('te-name').value.trim()||t.label;
+  const color=document.getElementById('te-color').value;
+  const bg=document.getElementById('te-bg').value;
+  if(BUILTIN_TYPES[k]){BUILTIN_TYPES[k]={...BUILTIN_TYPES[k],label:name,color,bg};}
+  else{customTypes[k]={...customTypes[k],label:name,color,bg};}
+  save();closeTagEdit();renderTagList();renderDay();toast('type updated');
+}
+function closeTagEdit(){document.getElementById('tag-edit-modal').classList.remove('open');editingTagId=null;}
+
+/* ═══════════════════════════════════════════
+   TODO
+═══════════════════════════════════════════ */
+function todoTagOptions(sel=''){
+  const types=allTypes();
+  return'<option value="">no tag</option>'+Object.entries(types).filter(([k])=>!['school','rest','review','free'].includes(k)).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v.label}</option>`).join('');
+}
+function renderTodoSb(){
+  const types=allTypes();
+  const filters=[{id:'all',label:'all'},...Object.entries(types).filter(([k])=>todos.some(t=>t.tag===k)).map(([k,v])=>({id:k,label:v.label})),{id:'done',label:'done'}];
+  document.getElementById('todo-sb-filters').innerHTML=filters.map(f=>`<button class="day-btn${todoFilter===f.id?' active':''}" onclick="setTodoFilter('${f.id}')">${f.label}</button>`).join('');
+}
+function setTodoFilter(f){todoFilter=f;renderTodoSb();renderTodo();}
+function renderTodo(){
+  document.getElementById('todo-tag-sel').innerHTML=todoTagOptions();
+  const types=allTypes();
+  const usedTags=[...new Set(todos.map(t=>t.tag).filter(Boolean))];
+  const filters=[{id:'all',label:'all'},...usedTags.filter(k=>types[k]).map(k=>({id:k,label:types[k].label})),{id:'done',label:'done'}];
+  document.getElementById('todo-filters').innerHTML=filters.map(f=>`<button class="todo-filter-btn${todoFilter===f.id?' active':''}" onclick="setTodoFilter('${f.id}')">${f.label}</button>`).join('');
+  const total=todos.length,done=todos.filter(t=>t.done).length;
+  document.getElementById('todo-stats').innerHTML=`<div class="todo-stat">total <span>${total}</span></div><div class="todo-stat">done <span>${done}</span></div><div class="todo-stat">remaining <span>${total-done}</span></div>`;
+  let items;
+  if(todoFilter==='done')items=todos.filter(t=>t.done);
+  else if(todoFilter==='all')items=todos.filter(t=>!t.done);
+  else items=todos.filter(t=>t.tag===todoFilter&&!t.done);
+  const el=document.getElementById('todo-list');
+  if(!items.length){el.innerHTML=`<div class="todo-empty">${todoFilter==='done'?'no completed tasks':(todos.length?'nothing here':'no tasks yet — add one above')}</div>`;return;}
+  el.innerHTML=items.map(t=>{
+    const tag=types[t.tag];
+    const tagHtml=tag?`<span class="todo-tag-pill" style="background:${tag.bg};color:${tag.color}">${tag.label}</span>`:'';
+    return`<div class="todo-item">
+      <div class="todo-check${t.done?' checked':''}" onclick="toggleTodo('${t.id}')"></div>
+      <div class="todo-text-wrap">
+        <div class="todo-text">${t.text} ${tagHtml}</div>
+        <div class="todo-meta">${new Date(t.created).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+      </div>
+      <div class="todo-actions">
+        <button class="icon-btn" onclick="openTodoEdit('${t.id}')">✎</button>
+        <button class="icon-btn del" onclick="deleteTodo('${t.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addTodo(){
+  const text=document.getElementById('todo-input').value.trim();
+  const tag=document.getElementById('todo-tag-sel').value;
+  if(!text){toast('enter a task');return;}
+  todos.push({id:genId(),text,tag,done:false,created:Date.now()});
+  document.getElementById('todo-input').value='';
+  save();renderTodo();renderTodoSb();
+}
+function toggleTodo(id){
+  const t=todos.find(x=>x.id===id);if(t)t.done=!t.done;
+  save();renderTodo();renderTodoSb();
+}
+function deleteTodo(id){todos=todos.filter(x=>x.id!==id);save();renderTodo();renderTodoSb();}
+function clearDoneTodos(){todos=todos.filter(x=>!x.done);save();renderTodo();renderTodoSb();toast('cleared done tasks');}
+function clearAllTodos(){if(!confirm('Delete all todos?'))return;todos=[];save();renderTodo();renderTodoSb();toast('todos cleared');}
+function openTodoEdit(id){
+  editingTodoId=id;const t=todos.find(x=>x.id===id);if(!t)return;
+  document.getElementById('todo-edit-text').value=t.text;
+  document.getElementById('todo-edit-tag').innerHTML=todoTagOptions(t.tag||'');
+  document.getElementById('todo-edit-modal').classList.add('open');
+}
+function saveTodoEdit(){
+  const t=todos.find(x=>x.id===editingTodoId);if(!t)return;
+  t.text=document.getElementById('todo-edit-text').value.trim()||t.text;
+  t.tag=document.getElementById('todo-edit-tag').value;
+  save();closeTodoEdit();renderTodo();
+}
+function closeTodoEdit(){document.getElementById('todo-edit-modal').classList.remove('open');editingTodoId=null;}
+
+/* ═══════════════════════════════════════════
+   MOTIVATIONAL QUOTES
+═══════════════════════════════════════════ */
+const FALLBACK_QUOTES=[
+  {q:"The secret of getting ahead is getting started.",a:"Mark Twain"},
+  {q:"It always seems impossible until it's done.",a:"Nelson Mandela"},
+  {q:"Don't watch the clock; do what it does. Keep going.",a:"Sam Levenson"},
+  {q:"The harder I work, the luckier I get.",a:"Samuel Goldwyn"},
+  {q:"Success is the sum of small efforts, repeated day in and day out.",a:"Robert Collier"},
+  {q:"Believe you can and you're halfway there.",a:"Theodore Roosevelt"},
+  {q:"Push yourself, because no one else is going to do it for you.",a:"Unknown"},
+  {q:"Great things never come from comfort zones.",a:"Unknown"},
+  {q:"Dream it. Wish it. Do it.",a:"Unknown"},
+  {q:"Wake up with determination. Go to bed with satisfaction.",a:"Unknown"},
+  {q:"Do something today that your future self will thank you for.",a:"Sean Patrick Flanery"},
+  {q:"Little things make big days.",a:"Unknown"},
+  {q:"It's going to be hard, but hard is not impossible.",a:"Unknown"},
+  {q:"Don't stop when you're tired. Stop when you're done.",a:"Unknown"},
+];
+
+let dailyQuotes=[];
+
+function todayKey(){
+  const d=new Date();
+  return`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function getDayQuote(dayIndex){
+  if(dailyQuotes.length===0)return null;
+  return dailyQuotes[dayIndex%dailyQuotes.length]||null;
+}
+
+function loadCachedQuotes(){
+  try{
+    const raw=localStorage.getItem('rs-quotes');
+    if(!raw)return false;
+    const obj=JSON.parse(raw);
+    if(obj.date!==todayKey()||!obj.quotes||obj.quotes.length<7)return false;
+    dailyQuotes=obj.quotes;
+    return true;
+  }catch(e){return false;}
+}
+
+function saveCachedQuotes(quotes){
+  dailyQuotes=quotes;
+  localStorage.setItem('rs-quotes',JSON.stringify({date:todayKey(),quotes}));
+}
+
+async function fetchQuotes(){
+  /* Try dummyjson — fetch 14 random quotes and pick 7 */
+  try{
+    const res=await fetch('https://dummyjson.com/quotes?limit=14&skip='+Math.floor(Math.random()*86),{signal:AbortSignal.timeout(4000)});
+    if(res.ok){
+      const data=await res.json();
+      if(data.quotes&&data.quotes.length>=7){
+        const picked=data.quotes.slice(0,7).map(q=>({q:q.quote,a:q.author}));
+        saveCachedQuotes(picked);
+        renderDay();
+        return;
+      }
+    }
+  }catch(e){}
+
+  /* Fallback: qapi.vercel.app — fetch 7 one by one */
+  try{
+    const fetches=Array.from({length:7},()=>
+      fetch('https://qapi.vercel.app/api/random',{signal:AbortSignal.timeout(4000)})
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+    );
+    const results=await Promise.all(fetches);
+    const valid=results.filter(r=>r&&r.quote);
+    if(valid.length>=7){
+      saveCachedQuotes(valid.slice(0,7).map(r=>({q:r.quote,a:r.author||'Unknown'})));
+      renderDay();
+      return;
+    }
+  }catch(e){}
+
+  /* Final fallback: shuffle the local list */
+  const shuffled=[...FALLBACK_QUOTES].sort(()=>Math.random()-0.5);
+  saveCachedQuotes(shuffled.slice(0,7));
+  renderDay();
+}
+
+async function initQuotes(){
+  if(!loadCachedQuotes()){
+    await fetchQuotes();
+  }
+}
+
+function refreshQuotes(){
+  localStorage.removeItem('rs-quotes');
+  dailyQuotes=[];
+  renderDay();
+  fetchQuotes().then(()=>toast('new quotes loaded'));
+}
+
+/* ═══════════════════════════════════════════
+   MODAL CLOSE HANDLERS
+═══════════════════════════════════════════ */
+['slot-modal','def-modal','todo-edit-modal','tag-edit-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeModal();closeDefModal();closeTodoEdit();closeTagEdit();}
+});
+document.getElementById('todo-input').addEventListener('keydown',e=>{if(e.key==='Enter')addTodo();});
+document.getElementById('todo-edit-text').addEventListener('keydown',e=>{if(e.key==='Enter')saveTodoEdit();});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+load();buildNav();buildLegend();renderDay();initQuotes();
+</script>
+</body>
+</html>
